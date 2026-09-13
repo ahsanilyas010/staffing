@@ -8,13 +8,14 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{--navy:#1C4585;--orange:#F36F29;--green:#76B048;--white:#fff;--off:#F8F8F6;--border:#E5E3DF;--muted:#6B7280;--ink:#111}
 html{scroll-behavior:smooth}
-body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--white);color:var(--ink);overflow-x:hidden}
+body{font-family:"Plus Jakarta Sans",sans-serif;background:#fff;color:var(--ink);overflow-x:hidden}
 
 /* ── NAV ── */
 nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:0 3rem;height:72px;display:flex;align-items:center;justify-content:space-between;transition:all .4s}
 nav.scrolled{background:rgba(255,255,255,.96);backdrop-filter:blur(20px);box-shadow:0 2px 24px rgba(0,0,0,.08);border-bottom:1px solid var(--border)}
-.nav-logo img{height:48px;max-width:220px;object-fit:contain;transition:transform .3s}
+.nav-logo img{height:48px;max-width:220px;object-fit:contain;transition:transform .3s,filter .4s}
 .nav-logo img:hover{transform:scale(1.04)}
+nav:not(.scrolled) .nav-logo img{filter:brightness(0) invert(1)}
 .nav-links{display:flex;gap:2rem;list-style:none}
 .nav-links a{font-size:.8rem;font-weight:500;color:rgba(255,255,255,.85);text-decoration:none;position:relative;transition:color .25s}
 .nav-links a::after{content:"";position:absolute;bottom:-3px;left:0;right:0;height:2px;background:var(--orange);transform:scaleX(0);transform-origin:left;transition:transform .3s}
@@ -91,10 +92,10 @@ h1 .o{color:var(--orange)}
 .ticker-item::after{content:"◆";font-size:.4rem}
 
 /* ── SECTIONS ── */
-section{padding:6rem 4rem;max-width:1360px;margin:0 auto}
-.sl{font-size:.68rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--orange);margin-bottom:.9rem}
-.st{font-size:clamp(1.9rem,3.2vw,3.1rem);font-weight:800;letter-spacing:-.8px;line-height:1.13;color:var(--navy);margin-bottom:1.2rem}
-.ss{font-size:.95rem;color:var(--muted);line-height:1.85;max-width:580px}
+section{padding:6rem 4rem;max-width:1360px;margin:0 auto;background:transparent}
+.sl{font-size:.68rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--orange);margin-bottom:.9rem;background:transparent}
+.st{font-size:clamp(1.9rem,3.2vw,3.1rem);font-weight:800;letter-spacing:-.8px;line-height:1.13;color:var(--navy);margin-bottom:1.2rem;background:transparent}
+.ss{font-size:.95rem;color:var(--muted);line-height:1.85;max-width:580px;background:transparent}
 
 /* ── SERVICES ── */
 .svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3.5rem}
@@ -128,7 +129,7 @@ section{padding:6rem 4rem;max-width:1360px;margin:0 auto}
 .proc-step{background:#fff;border:1px solid var(--border);border-radius:18px;padding:2.2rem;position:relative}
 .proc-step::after{content:"";position:absolute;top:0;left:0;right:0;height:4px;border-radius:18px 18px 0 0;background:linear-gradient(90deg,var(--navy),var(--orange));transform:scaleX(0);transform-origin:left;transition:transform .4s}
 .proc-step:hover::after{transform:scaleX(1)}
-.proc-num{font-size:2.8rem;font-weight:800;color:var(--off);margin-bottom:1rem;line-height:1}
+.proc-num{font-size:2.8rem;font-weight:800;color:rgba(28,69,133,.22);margin-bottom:1rem;line-height:1}
 .proc-t{font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:.6rem}
 .proc-d{font-size:.84rem;color:var(--muted);line-height:1.75}
 
@@ -233,7 +234,7 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
 .footer-i{max-width:1360px;margin:0 auto}
 .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem}
 .footer-brand p{font-size:.84rem;line-height:1.8;margin-top:1rem;max-width:280px}
-.footer-brand img{height:44px;object-fit:contain;opacity:.9}
+.footer-brand img{height:44px;object-fit:contain;filter:brightness(0) invert(1);opacity:.9}
 .footer-col h4{font-size:.75rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#fff;margin-bottom:1.2rem}
 .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:.6rem}
 .footer-col a{font-size:.82rem;color:rgba(255,255,255,.5);text-decoration:none;transition:color .2s}
@@ -280,6 +281,7 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
   h1{letter-spacing:-1px}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -593,17 +595,17 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
       <div class="fc-s">Fill in your details and upload your CV. We respond to every submission within 48 hours.</div>
       <form id="candidateForm" onsubmit="handleSubmit(event)">
         <div class="frow">
-          <div class="fg"><label>First Name *</label><input type="text" required placeholder="Jane"></div>
-          <div class="fg"><label>Last Name *</label><input type="text" required placeholder="Smith"></div>
+          <div class="fg"><label>First Name *</label><input id="cf-first" type="text" required placeholder="Jane"></div>
+          <div class="fg"><label>Last Name *</label><input id="cf-last" type="text" required placeholder="Smith"></div>
         </div>
         <div class="frow">
-          <div class="fg"><label>Email Address *</label><input type="email" required placeholder="jane@email.com"></div>
-          <div class="fg"><label>Phone Number *</label><input type="tel" required placeholder="+44 7700 900000"></div>
+          <div class="fg"><label>Email Address *</label><input id="cf-email" type="email" required placeholder="jane@email.com"></div>
+          <div class="fg"><label>Phone Number *</label><input id="cf-phone" type="tel" required placeholder="+44 7700 900000"></div>
         </div>
         <div class="frow">
           <div class="fg">
             <label>Current Location *</label>
-            <select required>
+            <select id="cf-country" required>
               <option value="">Select Country</option>
               <option>United Kingdom</option>
               <option>United Arab Emirates</option>
@@ -619,7 +621,7 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
           </div>
           <div class="fg">
             <label>Open to Relocation?</label>
-            <select>
+            <select id="cf-relocation">
               <option value="">Select</option>
               <option>Yes — Internationally</option>
               <option>Yes — Regionally</option>
@@ -630,13 +632,13 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
         <div class="frow full">
           <div class="fg">
             <label>Preferred Role / Sector *</label>
-            <input type="text" required placeholder="e.g. Senior Software Engineer — Fintech">
+            <input id="cf-role" type="text" required placeholder="e.g. Senior Software Engineer — Fintech">
           </div>
         </div>
         <div class="frow">
           <div class="fg">
             <label>Years of Experience</label>
-            <select>
+            <select id="cf-experience">
               <option value="">Select</option>
               <option>0–2 years</option>
               <option>3–5 years</option>
@@ -646,7 +648,7 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
           </div>
           <div class="fg">
             <label>Expected Salary / Rate</label>
-            <input type="text" placeholder="e.g. £80k or $120/hr">
+            <input id="cf-salary" type="text" placeholder="e.g. £80k or $120/hr">
           </div>
         </div>
         <div class="frow full" style="margin-bottom:1rem">
@@ -663,8 +665,9 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
           <input type="checkbox" id="consent" required>
           <label for="consent">I consent to Assorted Staffing processing my personal data for recruitment purposes. My data will not be shared without my permission. <a href="#" onclick="openModal()">Privacy Policy</a>.</label>
         </div>
-        <button type="submit" class="submit-btn">Submit My Profile →</button>
+        <button type="submit" class="submit-btn" id="submitBtn">Submit My Profile →</button>
         <div class="success-banner" id="successBanner">✅ Profile received! A consultant will be in touch within 48 hours.</div>
+        <div class="success-banner" id="errorBanner" style="background:#fef2f2;border-color:#fecaca;color:#991b1b"></div>
       </form>
     </div>
   </div>
@@ -874,6 +877,11 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
 </div>
 
 <script>
+// ── SUPABASE CONFIG ──
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // ── NAV SCROLL ──
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => {
@@ -1011,11 +1019,56 @@ if (dz && fi) {
 }
 
 // ── FORM SUBMIT ──
-function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
-  document.getElementById('successBanner').style.display = 'block';
-  e.target.reset();
-  if (dz) dz.querySelector('p').innerHTML = '<strong>Drag & drop your CV here</strong><br>or <strong>click to browse</strong>';
+  const btn = document.getElementById('submitBtn');
+  const successBanner = document.getElementById('successBanner');
+  const errorBanner = document.getElementById('errorBanner');
+  successBanner.style.display = 'none';
+  errorBanner.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  try {
+    const file = fi && fi.files[0] ? fi.files[0] : null;
+    let cvFilePath = null;
+    let cvFileName = null;
+
+    if (file) {
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: upErr } = await sb.storage.from('cvs').upload(path, file, { cacheControl: '3600', upsert: false });
+      if (upErr) throw new Error('CV upload failed: ' + upErr.message);
+      cvFilePath = path;
+      cvFileName = file.name;
+    }
+
+    const { error: dbErr } = await sb.from('candidates').insert({
+      first_name: document.getElementById('cf-first').value.trim(),
+      last_name: document.getElementById('cf-last').value.trim(),
+      email: document.getElementById('cf-email').value.trim(),
+      phone: document.getElementById('cf-phone').value.trim(),
+      country: document.getElementById('cf-country').value,
+      relocation_pref: document.getElementById('cf-relocation').value,
+      preferred_role: document.getElementById('cf-role').value.trim(),
+      experience_years: document.getElementById('cf-experience').value,
+      salary_expectation: document.getElementById('cf-salary').value.trim(),
+      cv_file_path: cvFilePath,
+      cv_file_name: cvFileName,
+      consent: document.getElementById('consent').checked
+    });
+    if (dbErr) throw new Error('Submission failed: ' + dbErr.message);
+
+    successBanner.style.display = 'block';
+    e.target.reset();
+    if (dz) dz.querySelector('p').innerHTML = '<strong>Drag & drop your CV here</strong><br>or <strong>click to browse</strong>';
+  } catch (err) {
+    errorBanner.textContent = '❌ ' + err.message;
+    errorBanner.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit My Profile →';
+  }
 }
 
 // ── MODAL ──
