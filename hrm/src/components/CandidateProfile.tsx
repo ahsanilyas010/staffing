@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  FileText, Phone, Mail, MapPin, Star, Mic2,
+  FileText, Phone, Mail, MapPin, Star,
   ChevronLeft, Plus, ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
@@ -18,13 +18,12 @@ interface Props {
   cvUrl: string | null
 }
 
-export default function CandidateProfile({ candidate: init, stages, notes: initNotes, interviews, cvUrl }: Props) {
+export default function CandidateProfile({ candidate: init, stages, notes: initNotes, cvUrl }: Props) {
   const router  = useRouter()
   const [candidate, setCandidate] = useState(init)
   const [notes, setNotes]         = useState(initNotes)
   const [noteText, setNoteText]   = useState('')
   const [addingNote, setAddingNote] = useState(false)
-  const [launching, setLaunching]   = useState(false)
   const [movingStage, setMovingStage] = useState(false)
 
   async function changeStage(stageId: string) {
@@ -56,25 +55,6 @@ export default function CandidateProfile({ candidate: init, stages, notes: initN
     setNoteText('')
     setAddingNote(false)
   }
-
-  async function launchAiInterview() {
-    setLaunching(true)
-    const res = await fetch('/api/trigger-interview', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ candidate_id: candidate.id }),
-    })
-    const json = await res.json()
-    if (res.ok) {
-      alert(`AI interview call initiated! Call ID: ${json.vapi_call_id}`)
-      router.refresh()
-    } else {
-      alert(`Error: ${json.error}`)
-    }
-    setLaunching(false)
-  }
-
-  const aiStage = stages.find(s => s.stage_type === 'ai_interview')
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -130,7 +110,7 @@ export default function CandidateProfile({ candidate: init, stages, notes: initN
           </div>
         </div>
 
-        {/* Stage selector + score + AI button */}
+        {/* Stage selector + score */}
         <div className="mt-5 pt-5 border-t border-slate-100 flex flex-wrap items-center gap-4">
           <div>
             <p className="label">Stage</p>
@@ -148,112 +128,44 @@ export default function CandidateProfile({ candidate: init, stages, notes: initN
 
           {candidate.overall_score !== null && (
             <div>
-              <p className="label">AI Score</p>
+              <p className="label">Score</p>
               <span className={cn('flex items-center gap-1 text-lg font-bold', scoreColor(candidate.overall_score))}>
                 <Star className="h-4 w-4" />
                 {candidate.overall_score.toFixed(1)} / 10
               </span>
             </div>
           )}
-
-          <div className="ml-auto">
-            <button
-              onClick={launchAiInterview}
-              disabled={launching || !candidate.phone}
-              className="btn-primary"
-              title={!candidate.phone ? 'No phone number on record' : ''}
-            >
-              <Mic2 className="h-4 w-4" />
-              {launching ? 'Calling…' : 'Start AI Interview'}
-            </button>
-            {!candidate.phone && (
-              <p className="text-xs text-red-500 mt-1">Phone number required</p>
-            )}
-          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Details */}
-        <div className="card p-5 space-y-3">
-          <h2 className="font-semibold text-slate-900">Details</h2>
-          <dl className="space-y-2 text-sm">
-            {[
-              ['Experience', candidate.experience_years],
-              ['Salary expectation', candidate.salary_expectation],
-              ['Relocation', candidate.relocation_pref],
-              ['Source', candidate.source],
-              ['Applied', formatDate(candidate.created_at)],
-              ['Last activity', formatRelative(candidate.last_activity_at)],
-            ].map(([label, val]) => val ? (
-              <div key={label} className="flex justify-between">
-                <dt className="text-slate-500">{label}</dt>
-                <dd className="text-slate-900 font-medium text-right">{val}</dd>
-              </div>
-            ) : null)}
-          </dl>
-          {candidate.skills && candidate.skills.length > 0 && (
-            <div className="pt-2">
-              <p className="text-sm text-slate-500 mb-2">Skills</p>
-              <div className="flex flex-wrap gap-1.5">
-                {candidate.skills.map(s => (
-                  <span key={s} className="badge bg-brand-50 text-brand-700">{s}</span>
-                ))}
-              </div>
+      {/* Details */}
+      <div className="card p-5 space-y-3">
+        <h2 className="font-semibold text-slate-900">Details</h2>
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+          {[
+            ['Experience', candidate.experience_years],
+            ['Salary expectation', candidate.salary_expectation],
+            ['Relocation', candidate.relocation_pref],
+            ['Source', candidate.source],
+            ['Applied', formatDate(candidate.created_at)],
+            ['Last activity', formatRelative(candidate.last_activity_at)],
+          ].map(([label, val]) => val ? (
+            <div key={label} className="flex justify-between border-b border-slate-50 pb-1">
+              <dt className="text-slate-500">{label}</dt>
+              <dd className="text-slate-900 font-medium text-right">{val}</dd>
             </div>
-          )}
-        </div>
-
-        {/* AI Interviews */}
-        <div className="card p-5 space-y-3">
-          <h2 className="font-semibold text-slate-900">AI Interviews</h2>
-          {interviews.length === 0 ? (
-            <p className="text-sm text-slate-400">No interviews yet</p>
-          ) : (
-            <div className="space-y-3">
-              {interviews.map(interview => (
-                <div key={interview.id} className="border border-slate-100 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <span className={cn(
-                      'badge',
-                      interview.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
-                      interview.status === 'in_progress' ? 'bg-amber-50 text-amber-700' :
-                      'bg-slate-100 text-slate-600'
-                    )}>
-                      {interview.status}
-                    </span>
-                    {interview.overall_score !== null && (
-                      <span className={cn('text-sm font-bold', scoreColor(interview.overall_score))}>
-                        {interview.overall_score.toFixed(1)}/10
-                      </span>
-                    )}
-                  </div>
-                  {interview.status === 'completed' && interview.transcript && (
-                    <div className="mt-2">
-                      <p className="text-xs text-slate-500 font-medium">AI Summary</p>
-                      <p className="text-sm text-slate-700 mt-0.5">
-                        {(interview.transcript as unknown as { ai_summary?: string })?.ai_summary ?? 'No summary available'}
-                      </p>
-                      {(interview.transcript as unknown as { recommendation?: string })?.recommendation && (
-                        <span className={cn(
-                          'badge mt-2',
-                          (interview.transcript as unknown as { recommendation?: string }).recommendation === 'proceed'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : (interview.transcript as unknown as { recommendation?: string }).recommendation === 'reject'
-                            ? 'bg-red-50 text-red-700'
-                            : 'bg-amber-50 text-amber-700'
-                        )}>
-                          {(interview.transcript as unknown as { recommendation?: string }).recommendation}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <p className="text-xs text-slate-400 mt-1">{formatRelative(interview.created_at)}</p>
-                </div>
+          ) : null)}
+        </dl>
+        {candidate.skills && candidate.skills.length > 0 && (
+          <div className="pt-2">
+            <p className="text-sm text-slate-500 mb-2">Skills</p>
+            <div className="flex flex-wrap gap-1.5">
+              {candidate.skills.map(s => (
+                <span key={s} className="badge bg-brand-50 text-brand-700">{s}</span>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Notes */}

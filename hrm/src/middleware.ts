@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  if (!session && !pathname.startsWith('/login') && !pathname.startsWith('/api/vapi-webhook')) {
+  if (!session && !pathname.startsWith('/login')) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
