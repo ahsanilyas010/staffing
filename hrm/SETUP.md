@@ -17,6 +17,29 @@
    - Create 9 new tables (jobs, applications, pipeline_stages, interviews, etc.)
    - Seed default pipeline stages and tags
    - Set up RLS policies
+4. `002_import_candidates.sql` is a one-off import. **Never re-run it**: there is no unique constraint on email, so it would duplicate all 206 candidates.
+5. Make sure your own login has a row in `hr_users` (Step 5) **before** the next step. Otherwise the dashboard shows no data until you add it.
+6. Run `003_website_intake_and_security.sql`. This:
+   - makes website submissions land in **New Application** with an `applications` row
+   - validates every website field server-side and blocks the same email re-submitting within 24h
+   - restricts all HRM data to users listed in `hr_users`
+7. Run `004_storage_cvs.sql`. This creates the private `cvs` bucket (10MB; PDF/DOC/DOCX). Website visitors can upload but never read.
+8. **Authentication → Sign In / Providers → turn OFF "Allow new users to sign up".** HR staff are invited (Step 5), never self-registered.
+9. Run `checks/000_inspect.sql` at any time to see policies, triggers, the bucket and counts (read-only).
+
+### Managing HR users and roles
+- **Add a person:** Authentication → Users → **Add user** or **Invite user**. The `on_auth_user_created` trigger creates their `hr_users` row automatically as `viewer`. `ahsanilyas35@gmail.com` and `nehalksyed3@gmail.com` get `admin`.
+- **Roles:**
+  - `viewer`: read-only
+  - `recruiter` and `hiring_manager`: can move candidates, add notes and manage jobs
+  - `recruiter`: can also edit email templates
+  - `admin`: everything, plus managing stages, users and deleting candidates
+- **Change a role:** `update public.hr_users set role = 'recruiter' where email = '…';`
+- **Remove access:** `delete from public.hr_users where email = '…';` They keep their login but see no data. To remove the login too, delete the user under Authentication.
+- Because every new auth user gets an `hr_users` row, public sign-up **must stay disabled** (step 8).
+
+### Website form → HRM
+`index.html` (Register Your Profile) uploads the CV to `cvs`, then inserts into `candidates` using the public anon key. The database trigger `candidates_before_insert` forces `status`, `source`, `stage_id` (New Application) and other server-owned fields. A client can't place itself elsewhere in the pipeline.
 
 ---
 

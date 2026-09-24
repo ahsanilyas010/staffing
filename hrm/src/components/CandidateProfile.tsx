@@ -29,10 +29,17 @@ export default function CandidateProfile({ candidate: init, stages, notes: initN
   async function changeStage(stageId: string) {
     setMovingStage(true)
     const supabase = createClient()
-    await supabase
+    // RLS blocks updates silently (0 rows), so ask for the row back to detect it
+    const { data: updated, error } = await supabase
       .from('candidates')
       .update({ stage_id: stageId, last_activity_at: new Date().toISOString() })
       .eq('id', candidate.id)
+      .select('id')
+    if (error || !updated?.length) {
+      alert('Could not change the stage. Your role may be read-only (viewer) — ask an admin for edit access.')
+      setMovingStage(false)
+      return
+    }
     setCandidate(c => ({
       ...c,
       stage_id: stageId,
@@ -46,14 +53,18 @@ export default function CandidateProfile({ candidate: init, stages, notes: initN
     if (!noteText.trim()) return
     setAddingNote(true)
     const supabase = createClient()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('notes')
       .insert({ candidate_id: candidate.id, content: noteText.trim(), note_type: 'general' })
       .select('*, author:hr_users(id,full_name,email)')
       .single()
-    if (data) setNotes(n => [data as Note, ...n])
-    setNoteText('')
     setAddingNote(false)
+    if (error || !data) {
+      alert('Could not add the note. Your role may be read-only (viewer) — ask an admin for edit access.')
+      return
+    }
+    setNotes(n => [data as Note, ...n])
+    setNoteText('')
   }
 
   return (

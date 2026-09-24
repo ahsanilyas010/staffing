@@ -703,13 +703,16 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
       <div class="fc-t">Register Your Profile</div>
       <div class="fc-s">Fill in your details and upload your CV. We respond to every submission within 48 hours.</div>
       <form id="candidateForm" onsubmit="handleSubmit(event)">
-        <div class="frow">
-          <div class="fg"><label>First Name *</label><input id="cf-first" type="text" required placeholder="Jane"></div>
-          <div class="fg"><label>Last Name *</label><input id="cf-last" type="text" required placeholder="Smith"></div>
+        <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
+          <label for="cf-website">Website</label><input id="cf-website" name="website" type="text" tabindex="-1" autocomplete="off">
         </div>
         <div class="frow">
-          <div class="fg"><label>Email Address *</label><input id="cf-email" type="email" required placeholder="jane@email.com"></div>
-          <div class="fg"><label>Phone Number *</label><input id="cf-phone" type="tel" required placeholder="+44 7700 900000"></div>
+          <div class="fg"><label>First Name *</label><input id="cf-first" type="text" required maxlength="80" autocomplete="given-name" placeholder="Jane"></div>
+          <div class="fg"><label>Last Name *</label><input id="cf-last" type="text" required maxlength="80" autocomplete="family-name" placeholder="Smith"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label>Email Address *</label><input id="cf-email" type="email" required maxlength="254" autocomplete="email" placeholder="jane@email.com"></div>
+          <div class="fg"><label>Phone Number *</label><input id="cf-phone" type="tel" required maxlength="20" pattern="\+?[0-9 \(\)\-]{7,20}" title="Digits, spaces, +, - and brackets only (7–20 characters)" autocomplete="tel" placeholder="+44 7700 900000"></div>
         </div>
         <div class="frow">
           <div class="fg">
@@ -741,7 +744,7 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
         <div class="frow full">
           <div class="fg">
             <label>Preferred Role / Sector *</label>
-            <input id="cf-role" type="text" required placeholder="e.g. Senior Software Engineer — Fintech">
+            <input id="cf-role" type="text" required minlength="2" maxlength="200" placeholder="e.g. Senior Software Engineer — Fintech">
           </div>
         </div>
         <div class="frow">
@@ -749,15 +752,22 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
             <label>Years of Experience</label>
             <select id="cf-experience">
               <option value="">Select</option>
-              <option>0–2 years</option>
-              <option>3–5 years</option>
-              <option>6–10 years</option>
-              <option>10+ years</option>
+              <option value="0-1 years">0–1 years</option>
+              <option value="1-3 years">1–3 years</option>
+              <option value="3-5 years">3–5 years</option>
+              <option value="5-10 years">5–10 years</option>
+              <option value="10+ years">10+ years</option>
             </select>
           </div>
           <div class="fg">
             <label>Expected Salary / Rate</label>
-            <input id="cf-salary" type="text" placeholder="e.g. £80k or $120/hr">
+            <input id="cf-salary" type="text" maxlength="100" placeholder="e.g. £80k or $120/hr">
+          </div>
+        </div>
+        <div class="frow full">
+          <div class="fg">
+            <label>LinkedIn Profile</label>
+            <input id="cf-linkedin" type="url" maxlength="300" pattern="https://([a-zA-Z]{2,3}\.)?linkedin\.com/.*" title="e.g. https://www.linkedin.com/in/your-name" placeholder="https://www.linkedin.com/in/your-name">
           </div>
         </div>
         <div class="frow full" style="margin-bottom:1rem">
@@ -766,8 +776,9 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
             <div class="upload-zone" id="dropZone">
               <div class="icon">📄</div>
               <p><strong>Drag & drop your CV here</strong><br>or <strong>click to browse</strong><br><span style="font-size:.72rem;color:var(--muted)">PDF, DOCX or DOC — max 10MB</span></p>
-              <input type="file" id="cvFile" accept=".pdf,.doc,.docx" style="display:none">
+              <input type="file" id="cvFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none">
             </div>
+            <div id="cvError" role="alert" style="display:none;color:#991b1b;font-size:.78rem;margin-top:.4rem"></div>
           </div>
         </div>
         <div class="consent-row">
@@ -987,8 +998,9 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
 
 <script>
 // ── SUPABASE CONFIG ──
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// The anon key is public by design; Row Level Security limits it to inserting a candidate + uploading a CV.
+const SUPABASE_URL = 'https://wqgjzeussogxoetispzq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxZ2p6ZXVzc29neG9ldGlzcHpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2NDc3OTYsImV4cCI6MjEwNTIyMzc5Nn0.vc4NY_hVpSvtzaSMYVpXkK49zdQ12r6lKe7BdoBj91M';
 const sb = (SUPABASE_URL.startsWith('https://') && typeof supabase !== 'undefined')
   ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
@@ -1112,8 +1124,53 @@ function toggleFaq(btn) {
 }
 
 // ── FILE UPLOAD ──
+const CV_MAX_BYTES = 10 * 1024 * 1024;
+const CV_TYPES = {
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+};
+const DZ_DEFAULT_HTML = '<strong>Drag & drop your CV here</strong><br>or <strong>click to browse</strong><br><span style="font-size:.72rem;color:var(--muted)">PDF, DOCX or DOC — max 10MB</span>';
 const dz = document.getElementById('dropZone');
 const fi = document.getElementById('cvFile');
+const cvError = document.getElementById('cvError');
+let selectedFile = null;
+
+function fileExt(name) {
+  const parts = name.toLowerCase().split('.');
+  return parts.length > 1 ? parts.pop() : '';
+}
+
+function showCvError(msg) {
+  cvError.textContent = msg;
+  cvError.style.display = msg ? 'block' : 'none';
+}
+
+function setCvFile(file) {
+  selectedFile = null;
+  dz.querySelector('p').innerHTML = DZ_DEFAULT_HTML;
+  if (!file) return;
+  if (!CV_TYPES[fileExt(file.name)]) {
+    fi.value = '';
+    return showCvError('Please upload a PDF, DOC or DOCX file.');
+  }
+  if (file.size > CV_MAX_BYTES) {
+    fi.value = '';
+    return showCvError('Your CV is larger than 10MB. Please upload a smaller file.');
+  }
+  if (file.size === 0) {
+    fi.value = '';
+    return showCvError('That file is empty. Please choose your CV again.');
+  }
+  showCvError('');
+  selectedFile = file;
+  const p = dz.querySelector('p');
+  p.textContent = '';
+  const strong = document.createElement('strong');
+  strong.textContent = '✅ ' + file.name;
+  p.appendChild(strong);
+}
+
 if (dz && fi) {
   dz.addEventListener('click', () => fi.click());
   dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
@@ -1121,61 +1178,100 @@ if (dz && fi) {
   dz.addEventListener('drop', e => {
     e.preventDefault();
     dz.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (file) dz.querySelector('p').innerHTML = `<strong>✅ ${file.name}</strong>`;
+    setCvFile(e.dataTransfer.files[0] || null);
   });
-  fi.addEventListener('change', () => {
-    if (fi.files[0]) dz.querySelector('p').innerHTML = `<strong>✅ ${fi.files[0].name}</strong>`;
-  });
+  fi.addEventListener('change', () => setCvFile(fi.files[0] || null));
 }
 
 // ── FORM SUBMIT ──
+function randomHex32() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID().replace(/-/g, '');
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function friendlyError(err) {
+  const msg = (err && err.message) || '';
+  if (err && (err.code === '23505' || msg.includes('DUPLICATE_SUBMISSION'))) {
+    return 'We already received your profile in the last 24 hours — a consultant will be in touch soon.';
+  }
+  if (err && err.code === '23514' && msg) return msg;
+  if (/exceeded the maximum allowed size|payload too large|413/i.test(msg)) {
+    return 'Your CV is larger than 10MB. Please upload a smaller file.';
+  }
+  if (/mime type|invalid_mime_type/i.test(msg)) return 'Please upload a PDF, DOC or DOCX file.';
+  if (/failed to fetch|network/i.test(msg)) return 'Network error — please check your connection and try again.';
+  return 'Something went wrong while submitting your profile. Please try again, or email us directly.';
+}
+
+const valueOrNull = id => {
+  const v = document.getElementById(id).value.trim();
+  return v === '' ? null : v;
+};
+
 async function handleSubmit(e) {
   e.preventDefault();
+  const form = e.target;
   const btn = document.getElementById('submitBtn');
   const successBanner = document.getElementById('successBanner');
   const errorBanner = document.getElementById('errorBanner');
   successBanner.style.display = 'none';
   errorBanner.style.display = 'none';
+
+  const showSuccess = () => {
+    successBanner.style.display = 'block';
+    form.reset();
+    setCvFile(null);
+  };
+
+  // Honeypot: real visitors never see or fill this field
+  if (document.getElementById('cf-website').value) return showSuccess();
+
+  if (!selectedFile) {
+    showCvError('Please upload your CV (PDF, DOC or DOCX, max 10MB).');
+    dz.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = 'Submitting…';
 
   try {
     if (!sb) throw new Error('Database not configured yet. Please contact us directly.');
-    const file = fi && fi.files[0] ? fi.files[0] : null;
-    let cvFilePath = null;
-    let cvFileName = null;
 
-    if (file) {
-      const ext = file.name.split('.').pop();
-      const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: upErr } = await sb.storage.from('cvs').upload(path, file, { cacheControl: '3600', upsert: false });
-      if (upErr) throw new Error('CV upload failed: ' + upErr.message);
-      cvFilePath = path;
-      cvFileName = file.name;
-    }
-
-    const { error: dbErr } = await sb.from('candidates').insert({
-      first_name: document.getElementById('cf-first').value.trim(),
-      last_name: document.getElementById('cf-last').value.trim(),
-      email: document.getElementById('cf-email').value.trim(),
-      phone: document.getElementById('cf-phone').value.trim(),
-      country: document.getElementById('cf-country').value,
-      relocation_pref: document.getElementById('cf-relocation').value,
-      preferred_role: document.getElementById('cf-role').value.trim(),
-      experience_years: document.getElementById('cf-experience').value,
-      salary_expectation: document.getElementById('cf-salary').value.trim(),
-      cv_file_path: cvFilePath,
-      cv_file_name: cvFileName,
-      consent: document.getElementById('consent').checked
+    const ext = fileExt(selectedFile.name);
+    const cvFilePath = `${Date.now()}_${randomHex32()}.${ext}`;
+    const { error: upErr } = await sb.storage.from('cvs').upload(cvFilePath, selectedFile, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: CV_TYPES[ext]
     });
-    if (dbErr) throw new Error('Submission failed: ' + dbErr.message);
+    if (upErr) throw upErr;
 
-    successBanner.style.display = 'block';
-    e.target.reset();
-    if (dz) dz.querySelector('p').innerHTML = '<strong>Drag & drop your CV here</strong><br>or <strong>click to browse</strong>';
+    // No .select() after insert: website visitors are not allowed to read candidates back.
+    const { error: dbErr } = await sb.from('candidates').insert({
+      first_name: valueOrNull('cf-first'),
+      last_name: valueOrNull('cf-last'),
+      email: (valueOrNull('cf-email') || '').toLowerCase() || null,
+      phone: valueOrNull('cf-phone'),
+      country: valueOrNull('cf-country'),
+      relocation_pref: valueOrNull('cf-relocation'),
+      preferred_role: valueOrNull('cf-role'),
+      experience_years: valueOrNull('cf-experience'),
+      salary_expectation: valueOrNull('cf-salary'),
+      linkedin_url: valueOrNull('cf-linkedin'),
+      cv_file_path: cvFilePath,
+      cv_file_name: selectedFile.name.slice(0, 255),
+      consent: document.getElementById('consent').checked,
+      source: 'website_form'
+    });
+    if (dbErr) throw dbErr;
+
+    showSuccess();
   } catch (err) {
-    errorBanner.textContent = '❌ ' + err.message;
+    console.error('Profile submission failed:', err);
+    errorBanner.textContent = '❌ ' + friendlyError(err);
     errorBanner.style.display = 'block';
   } finally {
     btn.disabled = false;

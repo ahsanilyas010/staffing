@@ -5,8 +5,34 @@
 -- supabase-setup.sql has been applied.
 -- ============================================================
 
+-- NOTE: policies below are the original Phase-1 policies. Migration
+-- 003 replaces them all with HR-only (is_hr_user) policies — always
+-- run 003 and 004 after this file.
+
 -- ────────────────────────────────────────────────────────────
--- 1. PIPELINE STAGES (seed before adding FK to candidates)
+-- 1. HR USERS (maps to Supabase Auth)
+--    Created first: the pipeline_stages admin policy references it.
+-- ────────────────────────────────────────────────────────────
+create table if not exists public.hr_users (
+  id          uuid primary key references auth.users(id) on delete cascade,
+  email       text not null,
+  full_name   text,
+  role        text not null default 'recruiter' check (role in (
+    'admin','recruiter','hiring_manager','viewer'
+  )),
+  avatar_url  text,
+  created_at  timestamptz default now()
+);
+
+alter table public.hr_users enable row level security;
+
+create policy "users_read_own"  on public.hr_users for select to authenticated using (auth.uid() = id);
+create policy "users_read_all"  on public.hr_users for select to authenticated using (true);
+create policy "users_insert"    on public.hr_users for insert to authenticated with check (auth.uid() = id);
+create policy "users_update_own" on public.hr_users for update to authenticated using (auth.uid() = id);
+
+-- ────────────────────────────────────────────────────────────
+-- 2. PIPELINE STAGES (seed before adding FK to candidates)
 -- ────────────────────────────────────────────────────────────
 create table if not exists public.pipeline_stages (
   id           uuid primary key default gen_random_uuid(),
@@ -39,27 +65,6 @@ insert into public.pipeline_stages (name, order_index, color, stage_type) values
   ('Hired',               8, '#22c55e', 'hired'),
   ('Rejected',            9, '#f43f5e', 'rejected')
 on conflict do nothing;
-
--- ────────────────────────────────────────────────────────────
--- 2. HR USERS (maps to Supabase Auth)
--- ────────────────────────────────────────────────────────────
-create table if not exists public.hr_users (
-  id          uuid primary key references auth.users(id) on delete cascade,
-  email       text not null,
-  full_name   text,
-  role        text not null default 'recruiter' check (role in (
-    'admin','recruiter','hiring_manager','viewer'
-  )),
-  avatar_url  text,
-  created_at  timestamptz default now()
-);
-
-alter table public.hr_users enable row level security;
-
-create policy "users_read_own"  on public.hr_users for select to authenticated using (auth.uid() = id);
-create policy "users_read_all"  on public.hr_users for select to authenticated using (true);
-create policy "users_insert"    on public.hr_users for insert to authenticated with check (auth.uid() = id);
-create policy "users_update_own" on public.hr_users for update to authenticated using (auth.uid() = id);
 
 -- ────────────────────────────────────────────────────────────
 -- 3. EXTEND EXISTING candidates TABLE

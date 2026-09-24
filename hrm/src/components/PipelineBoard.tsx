@@ -27,10 +27,15 @@ export default function PipelineBoard({ stages, candidates }: Props) {
     if (!dragging || dragging === stageId) return
     setOver(null)
     const supabase = createClient()
-    await supabase
+    // RLS blocks updates silently (0 rows), so ask for the row back to detect it
+    const { data, error } = await supabase
       .from('candidates')
       .update({ stage_id: stageId, last_activity_at: new Date().toISOString() })
       .eq('id', dragging)
+      .select('id')
+    if (error || !data?.length) {
+      alert('Could not move this candidate. Your role may be read-only (viewer) — ask an admin for edit access.')
+    }
     router.refresh()
   }
 
