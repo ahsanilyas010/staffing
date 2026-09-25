@@ -154,6 +154,8 @@ export default function CandidateProfile({ candidate: init, stages, notes: initN
         <h2 className="font-semibold text-slate-900">Details</h2>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
           {[
+            ['Department', candidate.department],
+            ['Applied via', candidate.source_site],
             ['Experience', candidate.experience_years],
             ['Salary expectation', candidate.salary_expectation],
             ['Relocation', candidate.relocation_pref],

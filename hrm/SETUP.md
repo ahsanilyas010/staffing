@@ -27,7 +27,8 @@
 8. **Authentication → Sign In / Providers → turn OFF "Allow new users to sign up".** HR staff are invited (Step 5), never self-registered.
 9. Run `005_client_requirements.sql`. This creates `client_requirements`, where the website's **Hire Talent** popup saves employer leads. Anon can insert only, the trigger validates and blocks an identical resubmission within 10 minutes, and viewers are read-only.
 10. Run `006_client_requirement_notes.sql`. This adds internal HR notes on client requirements, shown on the **Client Requirements** detail page.
-11. Run `checks/000_inspect.sql` at any time to see policies, triggers, the bucket and counts (read-only).
+11. Run `007_candidate_department_source_site.sql`. This lets the **Careers** form on www.assorted.group (repo `assortedgroup`) register candidates with the same rules as the staffing form. It adds `candidates.department` (Assorted Group vertical, required on that form) and `candidates.source_site` (which website the candidate applied on). **Run it before deploying either website:** both forms send these columns.
+12. Run `checks/000_inspect.sql` at any time to see policies, triggers, the bucket and counts (read-only).
 
 ### Managing HR users and roles
 - **Add a person:** Authentication → Users → **Add user** or **Invite user**. The `on_auth_user_created` trigger creates their `hr_users` row automatically as `viewer`. `ahsanilyas35@gmail.com` and `nehalksyed3@gmail.com` get `admin`.

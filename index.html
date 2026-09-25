@@ -1357,7 +1357,8 @@ async function handleSubmit(e) {
       cv_file_path: cvFilePath,
       cv_file_name: selectedFile.name.slice(0, 255),
       consent: document.getElementById('consent').checked,
-      source: 'website_form'
+      source: 'website_form',
+      source_site: 'staffing.assorted.group'
     });
     if (dbErr) throw dbErr;
 

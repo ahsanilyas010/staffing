@@ -47,6 +47,8 @@ export interface Candidate {
   consent: boolean
   status: string
   source: string | null
+  source_site: string | null
+  department: string | null
   linkedin_url: string | null
   skills: string[]
   notes_count: number
