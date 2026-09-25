@@ -17,9 +17,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Logged in but not on the HR team: no dashboard access
   if (!hrUser) redirect('/auth/signout?error=not_authorized')
 
+  // Badge on "Client Requirements": leads nobody has picked up yet
+  const { count: newRequirements } = await supabase
+    .from('client_requirements')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'new')
+
   return (
     <div className="flex min-h-screen">
-      <Sidebar user={hrUser} />
+      <Sidebar user={hrUser} badges={{ '/requirements': newRequirements ?? 0 }} />
       <main className="flex-1 min-w-0 p-6 lg:p-8">{children}</main>
     </div>
   )

@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutDashboard, Users, Briefcase, Mic2, BarChart3, LogOut
+  LayoutDashboard, Users, Briefcase, Building2, Mic2, BarChart3, LogOut
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn, initials } from '@/lib/utils'
@@ -11,12 +11,19 @@ import type { HrUser } from '@/lib/supabase/types'
 const nav = [
   { href: '/pipeline',    label: 'Pipeline',    icon: LayoutDashboard },
   { href: '/candidates',  label: 'Candidates',  icon: Users },
+  { href: '/requirements', label: 'Client Requirements', icon: Building2 },
   { href: '/jobs',        label: 'Jobs',        icon: Briefcase },
   { href: '/interviews',  label: 'AI Interviews', icon: Mic2 },
   { href: '/reports',     label: 'Reports',     icon: BarChart3 },
 ]
 
-export default function Sidebar({ user }: { user: HrUser | null }) {
+export default function Sidebar({
+  user,
+  badges = {},
+}: {
+  user: HrUser | null
+  badges?: Record<string, number>
+}) {
   const pathname = usePathname()
   const router   = useRouter()
 
@@ -48,7 +55,15 @@ export default function Sidebar({ user }: { user: HrUser | null }) {
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />
-            {label}
+            <span className="flex-1">{label}</span>
+            {badges[href] ? (
+              <span
+                className="badge bg-brand-500 text-white px-2"
+                aria-label={`${badges[href]} new`}
+              >
+                {badges[href]}
+              </span>
+            ) : null}
           </Link>
         ))}
       </nav>

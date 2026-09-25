@@ -140,6 +140,42 @@ export interface Tag {
   category: TagCategory
 }
 
+export type ClientRequirementStatus =
+  | 'new' | 'contacted' | 'qualified' | 'proposal_sent' | 'won' | 'lost'
+export type HiringType = 'Permanent' | 'Contract' | 'Executive' | 'Offshore Team' | 'RPO'
+export type HiringUrgency = 'ASAP' | 'Within 1 month' | 'Just exploring'
+
+export interface ClientRequirement {
+  id: string
+  created_at: string
+  updated_at: string
+  contact_name: string
+  company_name: string
+  email: string
+  phone: string
+  country: string
+  roles: string
+  headcount: number
+  hiring_type: HiringType
+  urgency: HiringUrgency
+  message: string | null
+  source: string
+  source_cta: string | null
+  status: ClientRequirementStatus
+  assigned_to: string | null
+  // joined
+  assignee?: Pick<HrUser, 'id' | 'full_name' | 'email'> | null
+}
+
+export interface ClientRequirementNote {
+  id: string
+  requirement_id: string
+  author_id: string | null
+  content: string
+  created_at: string
+  author?: Pick<HrUser, 'id' | 'full_name' | 'email'> | null
+}
+
 export interface PipelineSummaryRow {
   stage_id: string
   stage_name: string

@@ -26,7 +26,8 @@
 7. Run `004_storage_cvs.sql`. This creates the private `cvs` bucket (10MB; PDF/DOC/DOCX). Website visitors can upload but never read.
 8. **Authentication → Sign In / Providers → turn OFF "Allow new users to sign up".** HR staff are invited (Step 5), never self-registered.
 9. Run `005_client_requirements.sql`. This creates `client_requirements`, where the website's **Hire Talent** popup saves employer leads. Anon can insert only, the trigger validates and blocks an identical resubmission within 10 minutes, and viewers are read-only.
-10. Run `checks/000_inspect.sql` at any time to see policies, triggers, the bucket and counts (read-only).
+10. Run `006_client_requirement_notes.sql`. This adds internal HR notes on client requirements, shown on the **Client Requirements** detail page.
+11. Run `checks/000_inspect.sql` at any time to see policies, triggers, the bucket and counts (read-only).
 
 ### Managing HR users and roles
 - **Add a person:** Authentication → Users → **Add user** or **Invite user**. The `on_auth_user_created` trigger creates their `hr_users` row automatically as `viewer`. `ahsanilyas35@gmail.com` and `nehalksyed3@gmail.com` get `admin`.
