@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { formatDate, scoreColor, initials, cn } from '@/lib/utils'
+import { likeLiteral, orLikeValue, roleOptions } from '@/lib/filters'
+import RoleSearch from '@/components/RoleSearch'
 import type { Candidate } from '@/lib/supabase/types'
 
 export const revalidate = 0
@@ -8,10 +10,12 @@ export const revalidate = 0
 export default async function CandidatesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; stage?: string }
+  searchParams: { q?: string; stage?: string; role?: string }
 }) {
   const supabase = createClient()
-  const { q, stage } = searchParams
+  const q     = searchParams.q?.trim() || ''
+  const role  = searchParams.role?.trim() || ''
+  const stage = searchParams.stage || ''
 
   let query = supabase
     .from('candidates')
@@ -19,25 +23,33 @@ export default async function CandidatesPage({
     .order('created_at', { ascending: false })
 
   if (q) {
+    const v = orLikeValue(q)
     query = query.or(
-      `first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%,preferred_role.ilike.%${q}%`
+      `first_name.ilike.${v},last_name.ilike.${v},email.ilike.${v},preferred_role.ilike.${v}`
     )
+  }
+  if (role) {
+    // Partial match: "design" finds "Design Intern", "Paid Design Internship", …
+    query = query.ilike('preferred_role', `%${likeLiteral(role)}%`)
   }
   if (stage) {
     query = query.eq('stage_id', stage)
   }
 
-  const { data: candidates } = await query
-  const { data: stages }     = await supabase
-    .from('pipeline_stages')
-    .select('id,name')
-    .order('order_index')
+  const [{ data: candidates }, { data: stages }, { data: roleRows }] = await Promise.all([
+    query,
+    supabase.from('pipeline_stages').select('id,name').order('order_index'),
+    supabase.from('candidates').select('preferred_role').not('preferred_role', 'is', null),
+  ])
+  const roles = roleOptions(roleRows)
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Candidates</h1>
-        <span className="text-slate-500 text-sm">{candidates?.length ?? 0} total</span>
+        <span className="text-slate-500 text-sm">
+          {candidates?.length ?? 0} {q || role || stage ? 'matching' : 'total'}
+        </span>
       </div>
 
       {/* Filters */}
@@ -48,6 +60,7 @@ export default async function CandidatesPage({
           placeholder="Search name, email, role…"
           className="input max-w-xs"
         />
+        <RoleSearch value={role} roles={roles} />
         <select name="stage" defaultValue={stage} className="input max-w-[200px]">
           <option value="">All stages</option>
           {stages?.map(s => (
@@ -55,7 +68,7 @@ export default async function CandidatesPage({
           ))}
         </select>
         <button type="submit" className="btn-primary">Filter</button>
-        {(q || stage) && (
+        {(q || role || stage) && (
           <Link href="/candidates" className="btn-ghost">Clear</Link>
         )}
       </form>
