@@ -17,7 +17,15 @@ left join public.pipeline_stages s on s.id = c.stage_id
 where c.email like 'qa.test+%@assorted.group'
 order by c.created_at desc;
 
+-- Hire Talent popup test leads
+select id, created_at, contact_name, company_name, email, hiring_type, source_cta, status
+from public.client_requirements
+where email like 'qa.test+%@assorted.group'
+order by created_at desc;
+
 -- begin;
 -- delete from public.candidates             -- applications, notes, interviews cascade
+-- where email like 'qa.test+%@assorted.group';
+-- delete from public.client_requirements
 -- where email like 'qa.test+%@assorted.group';
 -- commit;

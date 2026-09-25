@@ -357,16 +357,24 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
 /* ── MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);z-index:999;display:none;align-items:center;justify-content:center;padding:2rem}
 .modal-overlay.open{display:flex}
-.modal-box{background:#fff;border-radius:20px;max-width:680px;width:100%;max-height:80vh;overflow-y:auto;animation:modalIn .35s ease forwards}
-.modal-head{display:flex;justify-content:space-between;align-items:center;padding:1.8rem 2rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:1}
+.modal-box{background:#fff;border-radius:20px;max-width:680px;width:100%;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;animation:modalIn .35s ease forwards}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:1.8rem 2rem;border-bottom:1px solid var(--border);background:#fff;flex-shrink:0}
 .modal-head h3{font-size:1.05rem;font-weight:700;color:var(--navy)}
 .modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);line-height:1;padding:.25rem;transition:color .2s}
 .modal-close:hover{color:var(--ink)}
-.modal-body{padding:2rem}
+.modal-body{padding:2rem;overflow-y:auto;min-height:0}
 .modal-body h4{font-size:.9rem;font-weight:700;color:var(--navy);margin:1.4rem 0 .5rem}
 .modal-body h4:first-child{margin-top:0}
 .modal-body p,.modal-body li{font-size:.84rem;color:var(--muted);line-height:1.8}
 .modal-body ul{padding-left:1.2rem;margin-top:.3rem}
+.hire-sub{font-size:.82rem;color:var(--muted);line-height:1.65;margin-bottom:1.5rem}
+.form-note{font-size:.74rem;color:var(--muted);margin-top:.75rem;text-align:center}
+.form-note a{color:var(--orange);text-decoration:none}
+.form-error{display:none;background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:1rem 1.4rem;margin-top:1rem;font-size:.84rem;color:#991b1b;font-weight:600}
+.hire-thanks{display:none;text-align:center;padding:2rem 1rem}
+.hire-thanks .icon{font-size:2.6rem;margin-bottom:1rem}
+.hire-thanks p{font-size:1rem;color:var(--navy);font-weight:600;line-height:1.6;margin-bottom:1.5rem}
+.hire-thanks .submit-btn{width:auto;padding:.8rem 2.2rem}
 
 /* ── RESPONSIVE ── */
 @media(max-width:1024px){
@@ -388,6 +396,10 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
   .footer-top{grid-template-columns:1fr}
   .stat-grid{grid-template-columns:1fr 1fr}
   h1{letter-spacing:-1px}
+  .modal-overlay{padding:1rem}
+  .modal-box{max-height:92vh}
+  .modal-head{padding:1.2rem 1.25rem}
+  .modal-body{padding:1.25rem}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -405,7 +417,7 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
   </ul>
   <div class="nav-ctas">
     <a href="#apply" class="nav-btn nb-ghost">Upload CV</a>
-    <a href="#contact" class="nav-btn nb-solid">Hire Talent</a>
+    <a href="#contact" class="nav-btn nb-solid" onclick="return openHireModal('nav_hire_talent')">Hire Talent</a>
   </div>
 </nav>
 
@@ -423,7 +435,7 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
     <h1>The <span class="o">Right Talent,</span><br>Wherever You Are</h1>
     <p class="hero-sub">Assorted Staffing connects world-class organisations with exceptional professionals across borders — permanent, contract, and executive mandates, delivered at speed.</p>
     <div class="hero-ctas">
-      <a href="#contact" class="btn-primary">Hire Talent Now</a>
+      <a href="#contact" class="btn-primary" onclick="return openHireModal('hero_hire_talent_now')">Hire Talent Now</a>
       <a href="#apply" class="btn-ghost">Explore Roles →</a>
     </div>
   </div>
@@ -914,7 +926,7 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
   <h2 class="st reveal" data-delay="1">Ready to Move?</h2>
   <p class="ss reveal" data-delay="2">Whether you need to hire exceptional talent or take the next step in your own career, Assorted Staffing is your global partner.</p>
   <div class="cta-btns reveal" data-delay="3">
-    <a href="mailto:hire@assorted.group" class="btn-primary">Discuss a Hire</a>
+    <a href="#contact" class="btn-primary" onclick="return openHireModal('cta_discuss_hire')">Discuss a Hire</a>
     <a href="#apply" class="btn-ghost" style="border-color:rgba(255,255,255,.35);color:#fff">Upload Your CV</a>
   </div>
 </div>
@@ -932,8 +944,8 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
         <ul>
           <li><a href="#services">Our Services</a></li>
           <li><a href="#process">How It Works</a></li>
-          <li><a href="#contact">Get a Consultation</a></li>
-          <li><a href="#contact">RPO Solutions</a></li>
+          <li><a href="#contact" onclick="return openHireModal('footer_consultation')">Get a Consultation</a></li>
+          <li><a href="#contact" onclick="return openHireModal('footer_rpo', 'RPO')">RPO Solutions</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -964,6 +976,87 @@ footer{background:#0e2848;padding:4rem 4rem 2.5rem;color:rgba(255,255,255,.6)}
     </div>
   </div>
 </footer>
+
+<!-- HIRE TALENT MODAL (placed before the privacy modal so Privacy Policy opens on top of it) -->
+<div class="modal-overlay" id="hireModal" onclick="if (event.target === this) closeHireModal()">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="hireModalTitle">
+    <div class="modal-head">
+      <h3 id="hireModalTitle">Hire Talent</h3>
+      <button type="button" class="modal-close" aria-label="Close" onclick="closeHireModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="hireForm" onsubmit="handleHireSubmit(event)">
+        <p class="hire-sub">Tell us what you need and a consultant will get back to you with a shortlist plan.</p>
+        <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
+          <label for="hf-website">Website</label><input id="hf-website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <div class="frow">
+          <div class="fg"><label for="hf-name">Name *</label><input id="hf-name" type="text" required minlength="2" maxlength="100" autocomplete="name" placeholder="Jane Smith"></div>
+          <div class="fg"><label for="hf-company">Company Name *</label><input id="hf-company" type="text" required minlength="2" maxlength="150" autocomplete="organization" placeholder="Acme Ltd"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label for="hf-email">Email *</label><input id="hf-email" type="email" required maxlength="254" autocomplete="email" placeholder="jane@company.com"></div>
+          <div class="fg"><label for="hf-phone">Phone / WhatsApp *</label><input id="hf-phone" type="tel" required maxlength="20" pattern="\+?[0-9 \(\)\-]{7,20}" title="Digits, spaces, +, - and brackets only (7–20 characters)" autocomplete="tel" placeholder="+44 7700 900000"></div>
+        </div>
+        <div class="frow">
+          <div class="fg">
+            <label for="hf-country">Country *</label>
+            <select id="hf-country" required>
+              <option value="">Select Country</option>
+              <option>United Kingdom</option>
+              <option>United Arab Emirates</option>
+              <option>United States</option>
+              <option>Saudi Arabia</option>
+              <option>Canada</option>
+              <option>Australia</option>
+              <option>Germany</option>
+              <option>Singapore</option>
+              <option>Pakistan</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="fg"><label for="hf-headcount">Number of People *</label><input id="hf-headcount" type="number" required min="1" max="1000" step="1" inputmode="numeric" placeholder="e.g. 3"></div>
+        </div>
+        <div class="frow full">
+          <div class="fg"><label for="hf-roles">Role(s) to Hire *</label><input id="hf-roles" type="text" required minlength="2" maxlength="500" placeholder="e.g. 2 × Senior Java Developers, 1 × Finance Manager"></div>
+        </div>
+        <div class="frow">
+          <div class="fg">
+            <label for="hf-type">Hiring Type *</label>
+            <select id="hf-type" required>
+              <option value="">Select</option>
+              <option>Permanent</option>
+              <option>Contract</option>
+              <option>Executive</option>
+              <option>Offshore Team</option>
+              <option>RPO</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label for="hf-urgency">Urgency *</label>
+            <select id="hf-urgency" required>
+              <option value="">Select</option>
+              <option value="ASAP">ASAP</option>
+              <option value="Within 1 month">Within 1 month</option>
+              <option value="Just exploring">Just exploring</option>
+            </select>
+          </div>
+        </div>
+        <div class="frow full">
+          <div class="fg"><label for="hf-message">Message <span style="font-weight:400;color:var(--muted)">(optional)</span></label><textarea id="hf-message" maxlength="2000" placeholder="Anything else we should know — skills, budget, location, timeline…"></textarea></div>
+        </div>
+        <button type="submit" class="submit-btn" id="hireSubmitBtn">Send Requirement →</button>
+        <div class="form-error" id="hireError" role="alert"></div>
+        <p class="form-note">By submitting you agree to our <a href="#" onclick="openModal(); return false;">Privacy Policy</a>.</p>
+      </form>
+      <div class="hire-thanks" id="hireThanks" role="status">
+        <div class="icon">✅</div>
+        <p>Thank you, our team will contact you within 48 hours.</p>
+        <button type="button" class="submit-btn" onclick="closeHireModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- PRIVACY MODAL -->
 <div class="modal-overlay" id="privacyModal" onclick="closeModalOutside(event)">
@@ -1191,10 +1284,10 @@ function randomHex32() {
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function friendlyError(err) {
+function friendlyError(err, duplicateMessage) {
   const msg = (err && err.message) || '';
   if (err && (err.code === '23505' || msg.includes('DUPLICATE_SUBMISSION'))) {
-    return 'We already received your profile in the last 24 hours — a consultant will be in touch soon.';
+    return duplicateMessage || 'We already received your profile in the last 24 hours — a consultant will be in touch soon.';
   }
   if (err && err.code === '23514' && msg) return msg;
   if (/exceeded the maximum allowed size|payload too large|413/i.test(msg)) {
@@ -1202,7 +1295,7 @@ function friendlyError(err) {
   }
   if (/mime type|invalid_mime_type/i.test(msg)) return 'Please upload a PDF, DOC or DOCX file.';
   if (/failed to fetch|network/i.test(msg)) return 'Network error — please check your connection and try again.';
-  return 'Something went wrong while submitting your profile. Please try again, or email us directly.';
+  return 'Something went wrong while submitting. Please try again, or email us at hire@assorted.group.';
 }
 
 const valueOrNull = id => {
@@ -1280,9 +1373,103 @@ async function handleSubmit(e) {
 }
 
 // ── MODAL ──
-function openModal() { document.getElementById('privacyModal').classList.add('open'); document.body.style.overflow = 'hidden'; }
-function closeModal() { document.getElementById('privacyModal').classList.remove('open'); document.body.style.overflow = ''; }
+function syncBodyScroll() {
+  document.body.style.overflow = document.querySelector('.modal-overlay.open') ? 'hidden' : '';
+}
+function openModal() { document.getElementById('privacyModal').classList.add('open'); syncBodyScroll(); }
+function closeModal() { document.getElementById('privacyModal').classList.remove('open'); syncBodyScroll(); }
 function closeModalOutside(e) { if (e.target === document.getElementById('privacyModal')) closeModal(); }
+
+// ── HIRE TALENT MODAL ──
+const hireModal = document.getElementById('hireModal');
+const hireForm = document.getElementById('hireForm');
+const hireThanks = document.getElementById('hireThanks');
+let hireSourceCta = null;
+let hireLastFocus = null;
+
+// Returns false so the button's #contact link is only followed if JS fails
+function openHireModal(sourceCta, presetType) {
+  hireSourceCta = sourceCta || null;
+  hireLastFocus = document.activeElement;
+  hireForm.style.display = '';
+  hireThanks.style.display = 'none';
+  document.getElementById('hireError').style.display = 'none';
+  if (presetType && !document.getElementById('hf-type').value) {
+    document.getElementById('hf-type').value = presetType;
+  }
+  hireModal.classList.add('open');
+  syncBodyScroll();
+  setTimeout(() => document.getElementById('hf-name').focus(), 50);
+  return false;
+}
+
+function closeHireModal() {
+  hireModal.classList.remove('open');
+  syncBodyScroll();
+  // After a successful send, start fresh next time
+  if (hireThanks.style.display === 'block') {
+    hireForm.reset();
+    hireForm.style.display = '';
+    hireThanks.style.display = 'none';
+  }
+  if (hireLastFocus && hireLastFocus.focus) hireLastFocus.focus();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const privacy = document.getElementById('privacyModal');
+  if (privacy.classList.contains('open')) closeModal();
+  else if (hireModal.classList.contains('open')) closeHireModal();
+});
+
+async function handleHireSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('hireSubmitBtn');
+  const errorBox = document.getElementById('hireError');
+  errorBox.style.display = 'none';
+
+  const showThanks = () => {
+    hireForm.style.display = 'none';
+    hireThanks.style.display = 'block';
+  };
+
+  // Honeypot: real visitors never see or fill this field
+  if (document.getElementById('hf-website').value) return showThanks();
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    if (!sb) throw new Error('Database not configured yet. Please contact us directly.');
+
+    // No .select() after insert: website visitors are not allowed to read requirements back.
+    const { error } = await sb.from('client_requirements').insert({
+      contact_name: valueOrNull('hf-name'),
+      company_name: valueOrNull('hf-company'),
+      email: (valueOrNull('hf-email') || '').toLowerCase() || null,
+      phone: valueOrNull('hf-phone'),
+      country: valueOrNull('hf-country'),
+      roles: valueOrNull('hf-roles'),
+      headcount: parseInt(document.getElementById('hf-headcount').value, 10) || null,
+      hiring_type: valueOrNull('hf-type'),
+      urgency: valueOrNull('hf-urgency'),
+      message: valueOrNull('hf-message'),
+      source_cta: hireSourceCta,
+      source: 'website_form'
+    });
+    if (error) throw error;
+
+    showThanks();
+  } catch (err) {
+    console.error('Hire request failed:', err);
+    errorBox.textContent = '❌ ' + friendlyError(err,
+      'We already received this request a few minutes ago — our team will contact you within 48 hours.');
+    errorBox.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Requirement →';
+  }
+}
 </script>
 </body>
 </html>
