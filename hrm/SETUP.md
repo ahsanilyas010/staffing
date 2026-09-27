@@ -102,7 +102,7 @@ from auth.users where email = 'hr@assorted.group';
 1. Import the `hrm/` root directory as a Vercel project
 2. Set all environment variables from `.env.local.example` in Vercel project settings
 3. Set custom domain: `hrm.assorted.group`
-4. Vercel Cron is already configured in `vercel.json` — it hits `/api/jobs/run` every 5 minutes to dispatch screening calls, send queued messages, and process the background job queue. Make sure `CRON_SECRET` is set — the route rejects any request without a matching `Authorization: Bearer` header.
+4. Vercel Cron is already configured in `vercel.json` — it hits `/api/jobs/run` once daily (09:00 UTC) to dispatch screening calls, send queued messages, and process the background job queue. **Vercel's Hobby plan only allows daily cron schedules** — if you're on Hobby, this is as frequent as it can run. To dispatch calls and messages closer to real time (e.g. every 5 minutes, as the original spec intends), either upgrade the Vercel project to Pro and tighten the schedule in `vercel.json`, or call `POST /api/jobs/run` from an external scheduler (e.g. a GitHub Actions cron, cron-job.org, or another always-on server) with `Authorization: Bearer $CRON_SECRET`. Make sure `CRON_SECRET` is set either way — the route rejects any request without a matching header.
 5. Deploy
 
 ---
@@ -134,7 +134,7 @@ See `.env.local.example` for the full list. Highlights:
 - Referral links: append `?ref=EMP123` to any apply link
 
 ### AI voice screening
-- Runs automatically via Vercel Cron every 5 minutes — no manual trigger needed
+- Runs automatically via Vercel Cron (daily on Hobby, or more frequently if upgraded to Pro / an external scheduler is wired up — see Step 7) — no manual trigger needed
 - Calls happen 10:00–20:00 PKT, Monday to Saturday, up to `SCREENING_DAILY_CAP` per day
 - Transcripts, scores, and stage moves happen automatically after each call
 
