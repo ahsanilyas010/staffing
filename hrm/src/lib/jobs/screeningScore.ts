@@ -141,6 +141,21 @@ Scores are 0-100. Levels are 1-5. Job requirements: ${JSON.stringify(job)}`,
     }
   }
 
+  // Good candidate, but nothing open to move them into right now — park on the bench
+  // for the staff-aug match engine instead of losing them.
+  if (
+    extraction.recommendation === 'shortlist' &&
+    nextStageType !== 'interview_scheduled' &&
+    extraction.alternate_job_slugs.length === 0
+  ) {
+    await supabase.from('candidates').update({ bench: true }).eq('id', interview.candidate_id)
+  }
+
+  await supabase.from('jobs_queue').insert({
+    job_type: 'candidate.refresh_embedding',
+    payload: { candidate_id: interview.candidate_id },
+  })
+
   await logActivity(supabase, {
     entityType: 'application',
     entityId: payload.application_id,

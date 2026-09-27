@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/offer') ||
     pathname.startsWith('/onboard') ||
     pathname.startsWith('/timesheet') ||
-    pathname.startsWith('/client') ||
+    pathname.startsWith('/client/login') ||
     pathname.startsWith('/api/apply') ||
     pathname.startsWith('/api/webhooks') ||
     pathname.startsWith('/api/schedule') ||
@@ -43,12 +43,22 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/timesheet') ||
     pathname.startsWith('/api/jobs/run')
 
-  if (!session && !isPublicRoute) {
+  const isClientRoute = pathname.startsWith('/client') && !pathname.startsWith('/client/login')
+
+  if (!session && !isPublicRoute && isClientRoute) {
+    return NextResponse.redirect(new URL('/client/login', request.url))
+  }
+
+  if (!session && !isPublicRoute && !isClientRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
   if (session && pathname === '/login') {
     return NextResponse.redirect(new URL('/pipeline', request.url))
+  }
+
+  if (session && pathname === '/client/login') {
+    return NextResponse.redirect(new URL('/client', request.url))
   }
 
   return supabaseResponse

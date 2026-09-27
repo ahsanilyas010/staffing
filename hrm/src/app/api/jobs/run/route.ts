@@ -5,6 +5,8 @@ import { runScreeningScore } from '@/lib/jobs/screeningScore'
 import { runNoShowSweep } from '@/lib/jobs/noShowSweep'
 import { runRetention } from '@/lib/jobs/retention'
 import { runProbationReminders } from '@/lib/jobs/probationReminders'
+import { refreshCandidateEmbedding } from '@/lib/jobs/refreshEmbedding'
+import { runGenerateTimesheets } from '@/lib/jobs/generateTimesheets'
 import { createCall } from '@/lib/providers/voice'
 import { sendSms } from '@/lib/providers/sms'
 import { sendWhatsApp } from '@/lib/providers/whatsapp'
@@ -72,6 +74,11 @@ async function processQueueJob(supabase: ReturnType<typeof createServiceClient>,
 
     case 'screening.score': {
       await runScreeningScore(supabase, job.payload)
+      break
+    }
+
+    case 'candidate.refresh_embedding': {
+      await refreshCandidateEmbedding(supabase, job.payload.candidate_id)
       break
     }
 
@@ -186,5 +193,16 @@ export async function POST(request: NextRequest) {
   const retentionResult = currentHourUtc === 4 ? await runRetention(supabase) : null
   const probationResult = currentHourUtc === 4 ? await runProbationReminders(supabase) : null
 
-  return NextResponse.json({ dispatchResult, processed, failed, noShowResult, retentionResult, probationResult })
+  const currentDayUtc = new Date().getUTCDay()
+  const timesheetResult = currentDayUtc === 1 && currentHourUtc === 4 ? await runGenerateTimesheets(supabase) : null
+
+  return NextResponse.json({
+    dispatchResult,
+    processed,
+    failed,
+    noShowResult,
+    retentionResult,
+    probationResult,
+    timesheetResult,
+  })
 }

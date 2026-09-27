@@ -142,11 +142,49 @@ See `.env.local.example` for the full list. Highlights:
 - Pipeline board → drag card to new stage, or Candidate Profile → change stage dropdown
 - Every stage change is logged to `application_stage_history` and `activity_log`
 
-### Viewing reports
-- **Reports** page for pipeline funnel and interview stats
+### Scheduling (Phase 3)
+- Shortlisted candidates get a self-schedule link (`/schedule/[application_id]`) — booking a slot auto-confirms via WhatsApp and queues T-24h/T-2h SMS reminders
+- Front-desk kiosk: open `/checkin` on a tablet — candidates check in with their phone number
+- No-shows are swept automatically: first miss offers a reschedule link, second miss auto-rejects
+- **Interview Slots** page shows upcoming availability (15-min slots, 13:00–17:00 PKT, Mon–Sat, seeded 14 days out by migration 004 — re-run the seed block in that migration periodically, or extend it, to keep slots available)
+
+### Offers and onboarding (Phase 4)
+- From a candidate's application, send an offer via `POST /api/applications/[id]/offer` with `{ salary_pkr, start_date, probation_days }` — generates a PDF, uploads it to the private `offers` storage bucket, and sends the candidate a WhatsApp link to `/offer/[token]` (72h expiry, 48h reminder)
+- Accepting an offer seeds `onboarding_items` from the job's `onboarding_checklist` and sends the candidate to `/onboard/[application_id]` — uploads go to the private `onboarding` bucket, contract signing uses an in-browser canvas signature pad
+- Completing all required items automatically creates the `employees` row and advances the pipeline to Hired (or Placed, for client jobs)
+- **Storage buckets required**: create `offers` and `onboarding` as private buckets in Supabase Storage (alongside the existing `cvs` bucket)
+
+### Staff augmentation (Phase 5)
+- **Clients** page: create a client directly, or convert a `client_requirements` lead (captured via the public "request staffing" intake — wire a form to insert into that table, or add rows via SQL/dashboard) with one click — this also creates a job and an open requisition
+- **Requisitions** page: create a requisition against a client + job, then "Find matches" runs the semantic bench-search match engine (pgvector cosine similarity over `candidate_embeddings`) and lets you submit a shortlist to the client in one click
+- **Client Portal** (`/client/login`, separate from the HR `/login`): client contacts sign in with a Supabase Auth account mapped via `client_users`, see submitted candidates (name/role/skills only — no phone/email, enforced by the `client_candidate_view` view), approve/reject/request-interview, and approve weekly timesheets. To onboard a client contact: invite them via Supabase Auth same as an HR user, then `insert into public.client_users (auth_user_id, client_id, full_name, email) values (...)`
+- **Placements** page: once a client approves a candidate, "Place" them with a start date and bill/pay rate — this also flips `candidates.bench` off and auto-fills the requisition when headcount is met
+- **Bench** page: semantic search over shortlisted-but-unplaced candidates (`candidates.bench = true`), combining a free-text query (embedded and matched via the `match_candidates` RPC) with hard filters (city, max salary)
+- **Timesheets**: generated automatically every Monday for active placements (cron, see Phase 2/3 cadence notes), worker fills hours at `/timesheet/[token]`, client approves in the portal, HR exports approved timesheets as CSV from the Timesheets page for invoicing
+- Requires an embeddings provider — set `EMBEDDINGS_API_KEY` (OpenAI-compatible; defaults to OpenAI `text-embedding-3-small`, 1536 dimensions to match the `candidate_embeddings` schema)
+
+### Reporting and retention (Phase 6)
+- **Reports** page: pipeline funnel, AI voice screening metrics (answer rate, avg duration, cost per screening, auto-reject rate, HR override rate), source performance, interview no-show rate, and staff-aug metrics (open requisitions, average ageing, time-to-fill, employee retention)
+- **Settings → Providers** page: read-only check of which provider env vars are set, without exposing values
+- Retention cron (runs once daily): archives rejected applications older than 12 months (skips bench candidates), and clears call recording URLs older than 6 months
+- Probation reminders: employees within 7 days of `probation_end` get flagged in `activity_log` for HR review
 
 ---
 
+## Additional Storage Buckets
+
+Beyond the original `cvs` bucket, create these **private** buckets in Supabase Storage:
+- `offers` — generated offer letter PDFs
+- `onboarding` — onboarding document uploads and signature images
+
 ## Phases
 
-This is Phase 1 of the full Hiring Module spec (see `hrm/HIRING_MODULE_SPEC.md`). Phases 2–6 (scheduling, offers, onboarding, staff augmentation, and full reporting) build on this foundation.
+This build implements all 6 phases of the Hiring Module spec (see `hrm/HIRING_MODULE_SPEC.md`):
+1. Foundation — schema, provider adapters, public apply flow
+2. AI voice screening — dispatch, scoring, retries, drip messaging
+3. Scheduling — self-schedule, reminders, kiosk check-in, no-show handling
+4. Offers and onboarding — PDF offers, e-sign, automatic employee creation
+5. Staff augmentation — clients, requisitions, bench search, client portal, placements, timesheets
+6. Reporting and retention — full metrics dashboard, data retention automation
+
+Each phase's acceptance criteria are in the spec. All phases build on the same schema foundation from Phase 1 — no tables were renamed or replaced.

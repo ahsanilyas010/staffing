@@ -2,18 +2,28 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutDashboard, Users, Briefcase, Mic2, BarChart3, LogOut
+  LayoutDashboard, Users, Briefcase, Mic2, BarChart3, LogOut,
+  CalendarClock, FileSignature, ClipboardCheck, Building2, ListChecks,
+  UserSearch, HandCoins, Clock
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn, initials } from '@/lib/utils'
 import type { HrUser } from '@/lib/supabase/types'
 
 const nav = [
-  { href: '/pipeline',    label: 'Pipeline',    icon: LayoutDashboard },
-  { href: '/candidates',  label: 'Candidates',  icon: Users },
-  { href: '/jobs',        label: 'Jobs',        icon: Briefcase },
-  { href: '/interviews',  label: 'AI Interviews', icon: Mic2 },
-  { href: '/reports',     label: 'Reports',     icon: BarChart3 },
+  { href: '/pipeline',      label: 'Pipeline',      icon: LayoutDashboard },
+  { href: '/candidates',    label: 'Candidates',    icon: Users },
+  { href: '/jobs',          label: 'Jobs',          icon: Briefcase },
+  { href: '/interviews',    label: 'Interviews',    icon: Mic2 },
+  { href: '/slots',         label: 'Interview Slots', icon: CalendarClock },
+  { href: '/offers',        label: 'Offers',        icon: FileSignature },
+  { href: '/onboarding',    label: 'Onboarding',    icon: ListChecks },
+  { href: '/clients',       label: 'Clients',       icon: Building2 },
+  { href: '/requisitions',  label: 'Requisitions',  icon: ClipboardCheck },
+  { href: '/bench',         label: 'Bench',         icon: UserSearch },
+  { href: '/placements',    label: 'Placements',    icon: HandCoins },
+  { href: '/timesheets',    label: 'Timesheets',    icon: Clock },
+  { href: '/reports',       label: 'Reports',       icon: BarChart3 },
 ]
 
 export default function Sidebar({ user }: { user: HrUser | null }) {

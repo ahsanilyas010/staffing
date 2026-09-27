@@ -3,7 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 export async function logActivity(
   supabase: SupabaseClient,
   params: {
-    entityType: 'candidate' | 'application' | 'interview' | 'offer' | 'onboarding'
+    entityType: 'candidate' | 'application' | 'interview' | 'offer' | 'onboarding' | 'requisition' | 'client' | 'placement' | 'timesheet'
     entityId: string
     actor?: string
     action: string
