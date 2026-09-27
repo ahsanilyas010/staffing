@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { runScreeningDispatch } from '@/lib/jobs/screeningDispatch'
 import { runScreeningScore } from '@/lib/jobs/screeningScore'
+import { runNoShowSweep } from '@/lib/jobs/noShowSweep'
+import { runRetention } from '@/lib/jobs/retention'
+import { runProbationReminders } from '@/lib/jobs/probationReminders'
 import { createCall } from '@/lib/providers/voice'
 import { sendSms } from '@/lib/providers/sms'
 import { sendWhatsApp } from '@/lib/providers/whatsapp'
@@ -175,5 +178,13 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ dispatchResult, processed, failed })
+  const noShowResult = await runNoShowSweep(supabase)
+
+  // Retention only needs to run once a day — cheap enough to run every invocation too,
+  // but gate it to the first run of the UTC day to avoid redundant work on frequent schedules.
+  const currentHourUtc = new Date().getUTCHours()
+  const retentionResult = currentHourUtc === 4 ? await runRetention(supabase) : null
+  const probationResult = currentHourUtc === 4 ? await runProbationReminders(supabase) : null
+
+  return NextResponse.json({ dispatchResult, processed, failed, noShowResult, retentionResult, probationResult })
 }

@@ -39,10 +39,11 @@ export async function runScreeningDispatch(supabase: SupabaseClient) {
 
   const { data: due } = await supabase
     .from('applications')
-    .select('id')
+    .select('id, candidates!inner(do_not_contact)')
     .lte('next_call_at', new Date().toISOString())
     .not('next_call_at', 'is', null)
     .eq('status', 'active')
+    .eq('candidates.do_not_contact', false)
     .limit(dailyCap - (todaysCalls ?? 0))
 
   let dispatched = 0

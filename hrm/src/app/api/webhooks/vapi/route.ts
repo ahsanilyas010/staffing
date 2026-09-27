@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { verifyWebhookSignature } from '@/lib/providers/voice'
 import { logActivity } from '@/lib/activity'
+import { isNoAnswer, handleNoAnswer } from '@/lib/jobs/callOutcome'
 
 export async function POST(request: NextRequest) {
   const raw = await request.text()
@@ -25,6 +26,23 @@ export async function POST(request: NextRequest) {
 
     if (!interview) {
       return NextResponse.json({ error: 'Interview not found for call' }, { status: 404 })
+    }
+
+    if (isNoAnswer(message.endedReason)) {
+      const { data: interviewRow } = await supabase
+        .from('interviews')
+        .select('attempt_no')
+        .eq('id', interview.id)
+        .single()
+
+      await handleNoAnswer(supabase, {
+        application_id: interview.application_id,
+        candidate_id: interview.candidate_id,
+        interview_id: interview.id,
+        attempt_no: interviewRow?.attempt_no ?? 1,
+      })
+
+      return NextResponse.json({ ok: true, outcome: 'no_answer' })
     }
 
     await supabase
