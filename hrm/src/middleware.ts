@@ -25,7 +25,25 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  if (!session && !pathname.startsWith('/login')) {
+  const isPublicRoute =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/apply') ||
+    pathname.startsWith('/schedule') ||
+    pathname.startsWith('/checkin') ||
+    pathname.startsWith('/offer') ||
+    pathname.startsWith('/onboard') ||
+    pathname.startsWith('/timesheet') ||
+    pathname.startsWith('/client') ||
+    pathname.startsWith('/api/apply') ||
+    pathname.startsWith('/api/webhooks') ||
+    pathname.startsWith('/api/schedule') ||
+    pathname.startsWith('/api/checkin') ||
+    pathname.startsWith('/api/offer') ||
+    pathname.startsWith('/api/onboard') ||
+    pathname.startsWith('/api/timesheet') ||
+    pathname.startsWith('/api/jobs/run')
+
+  if (!session && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
