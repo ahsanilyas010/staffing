@@ -36,7 +36,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     .insert({
       name: lead.company_name,
       slug: slugify(lead.company_name),
-      contacts: [{ name: lead.contact_name, email: lead.contact_email, phone: lead.contact_phone }],
+      contacts: [{ name: lead.contact_name, email: lead.email, phone: lead.phone }],
       payroll_model: 'assorted_payroll',
     })
     .select()
@@ -47,8 +47,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const { data: job } = await supabase
     .from('jobs')
     .insert({
-      title: lead.role_needed,
-      slug: `${slugify(lead.role_needed)}-${client.slug}-${Date.now().toString(36)}`,
+      title: lead.roles,
+      slug: `${slugify(lead.roles)}-${client.slug}-${Date.now().toString(36)}`,
       client_id: client.id,
       status: 'open',
       headcount_open: lead.headcount ?? 1,
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   await supabase
     .from('client_requirements')
-    .update({ status: 'converted', converted_client_id: client.id })
+    .update({ status: 'won', converted_client_id: client.id })
     .eq('id', params.id)
 
   return NextResponse.json({ client, requisition })

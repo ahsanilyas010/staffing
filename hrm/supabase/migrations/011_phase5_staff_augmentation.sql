@@ -134,25 +134,11 @@ create policy "service_all_timesheets" on public.timesheets for all using (true)
 -- (application-level logic sets this; this index supports the /bench search)
 create index if not exists candidates_bench on public.candidates(bench) where bench = true;
 
--- Client leads (public "request staffing" intake) — converted to a client + requisition
-create table if not exists public.client_requirements (
-  id             uuid primary key default gen_random_uuid(),
-  company_name   text not null,
-  contact_name   text not null,
-  contact_email  text not null,
-  contact_phone  text,
-  role_needed    text not null,
-  headcount      int default 1,
-  notes          text,
-  status         text not null default 'new' check (status in ('new','contacted','converted','dismissed')),
-  converted_client_id uuid references public.clients(id),
-  created_at     timestamptz default now()
-);
-
-alter table public.client_requirements enable row level security;
-create policy "hr_all_client_requirements" on public.client_requirements for all to authenticated
-  using (is_hr_user()) with check (hr_can_write());
-create policy "anon_insert_client_requirements" on public.client_requirements for insert to anon with check (true);
+-- Client leads: public.client_requirements already exists (migration 005,
+-- fed by the website's "Hire Talent" popup) with its own RLS. Just add the
+-- link to the client record it gets converted into.
+alter table public.client_requirements
+  add column if not exists converted_client_id uuid references public.clients(id);
 
 -- Candidates submitted to a client against a requisition, before a placement is confirmed
 create table if not exists public.requisition_candidates (

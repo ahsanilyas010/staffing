@@ -56,22 +56,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: candidateError.message }, { status: 400 })
   }
 
-  const { data: newStage } = await supabase
-    .from('pipeline_stages')
-    .select('id')
-    .eq('stage_type', 'applied')
-    .single()
-
+  // candidates_after_insert (migration 003) already created an application row
+  // for this candidate — fill it in with the job/referral details rather than
+  // inserting a second one.
   const { data: application, error: applicationError } = await supabase
     .from('applications')
-    .insert({
-      candidate_id: candidate.id,
+    .update({
       job_id: job?.id ?? null,
-      stage_id: newStage?.id ?? null,
-      source: job_slug ? 'apply_page' : 'website_form',
       referral_code: referral_code ?? null,
       next_call_at: new Date(Date.now() + 60 * 1000).toISOString(),
     })
+    .eq('candidate_id', candidate.id)
     .select()
     .single()
 

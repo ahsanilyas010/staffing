@@ -11,15 +11,39 @@
 
 ---
 
-## Step 1 — Supabase Database
-
 Open your Supabase project → **SQL Editor** and run, in order:
 
 1. `supabase/migrations/001_hrm_schema.sql` — core HRM tables (candidates extension, jobs, applications, interviews, pipeline_stages, hr_users, notes, tags, email_templates)
-2. `supabase/migrations/002_import_candidates.sql` — imports existing website candidates
-3. `supabase/migrations/003_phase1_hiring_foundation.sql` — entities, extended jobs/applications/interviews, 3 new pipeline stages, activity_log, application_stage_history, outbound_messages, jobs_queue, candidate_embeddings (pgvector), and seeded job templates for every Assorted Group entity
+2. `supabase/migrations/002_import_candidates.sql` — one-off import of the original 206 candidates. **Never re-run it**: there is no unique constraint on email, so it would duplicate everyone.
+3. Make sure your own login has a row in `hr_users` (Step 5) **before** the next migration — otherwise the dashboard shows no data until you add it.
+4. `003_website_intake_and_security.sql` — makes website submissions land in **New Application** with an `applications` row, validates every website field server-side (blocks the same email re-submitting within 24h), and locks down all HRM data to users listed in `hr_users` via the `is_hr_user()` / `hr_can_write()` / `is_hr_admin()` helpers. **Every migration after this one depends on those three functions** — never redefine them elsewhere.
+5. `004_storage_cvs.sql` — creates the private `cvs` bucket (10MB; PDF/DOC/DOCX). Website visitors can upload but never read.
+6. **Authentication → Sign In / Providers → turn OFF "Allow new users to sign up".** HR staff are invited (Step 5), never self-registered.
+7. `005_client_requirements.sql` — creates `client_requirements`, where the website's **Hire Talent** popup saves employer leads. Anon can insert only; the trigger validates and blocks an identical resubmission within 10 minutes; viewers are read-only.
+8. `006_client_requirement_notes.sql` — internal HR notes on client requirements, shown on the **Client Requirements** detail page.
+9. `007_candidate_department_source_site.sql` — lets the **Careers** form on www.assorted.group (repo `assortedgroup`) register candidates with the same rules as the staffing form. Adds `candidates.department` and `candidates.source_site`. **Run it before deploying either website:** both forms send these columns.
+10. `008_phase1_hiring_foundation.sql` — entities, extended jobs/applications/interviews, 3 new pipeline stages, activity_log, application_stage_history, outbound_messages, jobs_queue, candidate_embeddings (pgvector), seeded job templates for every Assorted Group entity. Reuses the `is_hr_user()`/`hr_can_write()`/`is_hr_admin()` helpers from migration 003.
+11. `009_phase3_scheduling.sql` — interview_slots + booking sync trigger
+12. `010_phase4_offers_onboarding.sql` — offers, onboarding_items, employees
+13. `011_phase5_staff_augmentation.sql` — clients, client_users, requisitions, placements, timesheets, requisition_candidates. Adds `converted_client_id` to the existing `client_requirements` table (from migration 005) rather than recreating it.
+14. `012_phase5_bench_search.sql` — `match_candidates()` pgvector RPC for semantic bench search
+15. Run `checks/000_inspect.sql` at any time to see policies, triggers, the bucket and counts (read-only).
 
 Each migration is idempotent — safe to re-run.
+
+### Managing HR users and roles
+- **Add a person:** Authentication → Users → **Add user** or **Invite user**. The `on_auth_user_created` trigger creates their `hr_users` row automatically as `viewer`. `ahsanilyas35@gmail.com` and `nehalksyed3@gmail.com` get `admin`.
+- **Roles:**
+  - `viewer`: read-only
+  - `recruiter` and `hiring_manager`: can move candidates, add notes and manage jobs
+  - `recruiter`: can also edit email templates
+  - `admin`: everything, plus managing stages, users and deleting candidates
+- **Change a role:** `update public.hr_users set role = 'recruiter' where email = '…';`
+- **Remove access:** `delete from public.hr_users where email = '…';` They keep their login but see no data. To remove the login too, delete the user under Authentication.
+- Because every new auth user gets an `hr_users` row, public sign-up **must stay disabled** (step 6 above).
+
+### Website form → HRM
+`index.html` (Register Your Profile, and the Hire Talent popup) uploads the CV to `cvs`, then inserts into `candidates` / `client_requirements` using the public anon key. The database triggers `candidates_before_insert` and `client_requirements_before_insert` force `status`, `source`, `stage_id` and other server-owned fields. A client can't place itself elsewhere in the pipeline.
 
 ---
 

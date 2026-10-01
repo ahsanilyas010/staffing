@@ -11,16 +11,7 @@ interface Client {
   payroll_model: string
 }
 
-interface Lead {
-  id: string
-  company_name: string
-  contact_name: string
-  contact_email: string
-  role_needed: string
-  headcount: number
-}
-
-export default function ClientsList({ clients, leads }: { clients: Client[]; leads: Lead[] }) {
+export default function ClientsList({ clients }: { clients: Client[] }) {
   const router = useRouter()
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -39,37 +30,8 @@ export default function ClientsList({ clients, leads }: { clients: Client[]; lea
     router.refresh()
   }
 
-  async function convertLead(id: string) {
-    await fetch(`/api/client-requirements/${id}/convert`, { method: 'POST' })
-    router.refresh()
-  }
-
   return (
     <div className="space-y-6">
-      {leads.length > 0 && (
-        <div className="card p-4">
-          <h2 className="text-sm font-semibold text-slate-700 mb-3">New leads ({leads.length})</h2>
-          <div className="space-y-2">
-            {leads.map((lead) => (
-              <div key={lead.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">{lead.company_name}</p>
-                  <p className="text-xs text-slate-500">
-                    {lead.role_needed} × {lead.headcount} — {lead.contact_name} ({lead.contact_email})
-                  </p>
-                </div>
-                <button
-                  onClick={() => convertLead(lead.id)}
-                  className="text-xs font-medium bg-orange-600 text-white px-3 py-1.5 rounded-lg"
-                >
-                  Convert to client
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="flex justify-end">
         <button onClick={() => setShowForm(!showForm)} className="btn-primary">
           + New client

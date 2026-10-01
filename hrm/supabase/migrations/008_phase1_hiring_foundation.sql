@@ -3,30 +3,12 @@
 -- Adds entities, extends jobs/applications/interviews,
 -- adds 3 pipeline stages, activity_log, application_stage_history,
 -- outbound_messages, jobs_queue, candidate_embeddings
+--
+-- Depends on migration 003_website_intake_and_security.sql, which
+-- defines is_hr_user() / hr_can_write() / is_hr_admin() — run that
+-- first. Do not redefine those functions here.
 -- Idempotent — safe to re-run
 -- ============================================================
-
--- ────────────────────────────────────────────────────────────
--- RLS helpers (idempotent)
--- ────────────────────────────────────────────────────────────
-create or replace function public.is_hr_user() returns boolean
-  language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.hr_users where id = auth.uid());
-$$;
-
-create or replace function public.hr_can_write() returns boolean
-  language sql stable security definer set search_path = public as $$
-  select exists (
-    select 1 from public.hr_users
-    where id = auth.uid()
-      and role in ('admin','recruiter','hiring_manager')
-  );
-$$;
-
-create or replace function public.is_hr_admin() returns boolean
-  language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.hr_users where id = auth.uid() and role = 'admin');
-$$;
 
 -- ────────────────────────────────────────────────────────────
 -- ENTITIES (Assorted Group business units)

@@ -53,11 +53,6 @@ export async function POST(request: NextRequest) {
   const { csv, source } = body as { csv: string; source: string }
 
   const rows = parseCsv(csv)
-  const { data: newStage } = await supabase
-    .from('pipeline_stages')
-    .select('id')
-    .eq('stage_type', 'applied')
-    .single()
 
   let imported = 0
   let skipped = 0
@@ -92,11 +87,7 @@ export async function POST(request: NextRequest) {
       continue
     }
 
-    await supabase.from('applications').insert({
-      candidate_id: candidate.id,
-      stage_id: newStage?.id ?? null,
-      source: row.source ?? source ?? 'csv_import',
-    })
+    // candidates_after_insert (migration 003) already created the application row
 
     await logActivity(supabase, {
       entityType: 'candidate',

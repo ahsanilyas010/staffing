@@ -13,6 +13,7 @@ import type { HrUser } from '@/lib/supabase/types'
 const nav = [
   { href: '/pipeline',      label: 'Pipeline',      icon: LayoutDashboard },
   { href: '/candidates',    label: 'Candidates',    icon: Users },
+  { href: '/requirements',  label: 'Client Requirements', icon: Building2 },
   { href: '/jobs',          label: 'Jobs',          icon: Briefcase },
   { href: '/interviews',    label: 'Interviews',    icon: Mic2 },
   { href: '/slots',         label: 'Interview Slots', icon: CalendarClock },
@@ -26,7 +27,13 @@ const nav = [
   { href: '/reports',       label: 'Reports',       icon: BarChart3 },
 ]
 
-export default function Sidebar({ user }: { user: HrUser | null }) {
+export default function Sidebar({
+  user,
+  badges = {},
+}: {
+  user: HrUser | null
+  badges?: Record<string, number>
+}) {
   const pathname = usePathname()
   const router   = useRouter()
 
@@ -58,7 +65,15 @@ export default function Sidebar({ user }: { user: HrUser | null }) {
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />
-            {label}
+            <span className="flex-1">{label}</span>
+            {badges[href] ? (
+              <span
+                className="badge bg-brand-500 text-white px-2"
+                aria-label={`${badges[href]} new`}
+              >
+                {badges[href]}
+              </span>
+            ) : null}
           </Link>
         ))}
       </nav>
