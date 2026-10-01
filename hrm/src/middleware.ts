@@ -25,12 +25,40 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  if (!session && !pathname.startsWith('/login')) {
+  const isPublicRoute =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/apply') ||
+    pathname.startsWith('/schedule') ||
+    pathname.startsWith('/checkin') ||
+    pathname.startsWith('/offer') ||
+    pathname.startsWith('/onboard') ||
+    pathname.startsWith('/timesheet') ||
+    pathname.startsWith('/client/login') ||
+    pathname.startsWith('/api/apply') ||
+    pathname.startsWith('/api/webhooks') ||
+    pathname.startsWith('/api/schedule') ||
+    pathname.startsWith('/api/checkin') ||
+    pathname.startsWith('/api/offer') ||
+    pathname.startsWith('/api/onboard') ||
+    pathname.startsWith('/api/timesheet') ||
+    pathname.startsWith('/api/jobs/run')
+
+  const isClientRoute = pathname.startsWith('/client') && !pathname.startsWith('/client/login')
+
+  if (!session && !isPublicRoute && isClientRoute) {
+    return NextResponse.redirect(new URL('/client/login', request.url))
+  }
+
+  if (!session && !isPublicRoute && !isClientRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
   if (session && pathname === '/login') {
     return NextResponse.redirect(new URL('/pipeline', request.url))
+  }
+
+  if (session && pathname === '/client/login') {
+    return NextResponse.redirect(new URL('/client', request.url))
   }
 
   return supabaseResponse

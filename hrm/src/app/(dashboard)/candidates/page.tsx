@@ -47,9 +47,12 @@ export default async function CandidatesPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Candidates</h1>
-        <span className="text-slate-500 text-sm">
-          {candidates?.length ?? 0} {q || role || stage ? 'matching' : 'total'}
-        </span>
+        <div className="flex items-center gap-4">
+          <span className="text-slate-500 text-sm">
+            {candidates?.length ?? 0} {q || role || stage ? 'matching' : 'total'}
+          </span>
+          <Link href="/candidates/import" className="btn-ghost text-sm">Import CSV</Link>
+        </div>
       </div>
 
       {/* Filters */}

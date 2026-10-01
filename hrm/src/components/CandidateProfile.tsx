@@ -3,12 +3,18 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   FileText, Phone, Mail, MapPin, Star,
-  ChevronLeft, Plus, ExternalLink
+  ChevronLeft, Plus, ExternalLink, CalendarClock, Check
 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { cn, formatDate, formatRelative, scoreColor, initials } from '@/lib/utils'
 import type { Candidate, PipelineStage, Note, Interview } from '@/lib/supabase/types'
+
+interface ApplicationOption {
+  id: string
+  status: string
+  jobs?: { title: string } | null
+}
 
 interface Props {
   candidate: Candidate
@@ -16,15 +22,34 @@ interface Props {
   notes: Note[]
   interviews: Interview[]
   cvUrl: string | null
+  applications: ApplicationOption[]
 }
 
-export default function CandidateProfile({ candidate: init, stages, notes: initNotes, cvUrl }: Props) {
+export default function CandidateProfile({ candidate: init, stages, notes: initNotes, cvUrl, applications }: Props) {
   const router  = useRouter()
   const [candidate, setCandidate] = useState(init)
   const [notes, setNotes]         = useState(initNotes)
   const [noteText, setNoteText]   = useState('')
   const [addingNote, setAddingNote] = useState(false)
   const [movingStage, setMovingStage] = useState(false)
+  const [sendingInviteFor, setSendingInviteFor] = useState<string | null>(null)
+  const [invitesSent, setInvitesSent] = useState<Set<string>>(new Set())
+  const [inviteError, setInviteError] = useState<string | null>(null)
+
+  async function sendScheduleEmail(applicationId: string) {
+    setSendingInviteFor(applicationId)
+    setInviteError(null)
+    try {
+      const res = await fetch(`/api/applications/${applicationId}/send-schedule-email`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed to send')
+      setInvitesSent(prev => new Set(prev).add(applicationId))
+    } catch (err) {
+      setInviteError((err as Error).message)
+    } finally {
+      setSendingInviteFor(null)
+    }
+  }
 
   async function changeStage(stageId: string) {
     setMovingStage(true)
@@ -180,6 +205,49 @@ export default function CandidateProfile({ candidate: init, stages, notes: initN
           </div>
         )}
       </div>
+
+      {/* Interview scheduling */}
+      {applications.length > 0 && (
+        <div className="card p-5 space-y-3">
+          <h2 className="font-semibold text-slate-900">Interview Scheduling</h2>
+          {inviteError && <p className="text-sm text-red-600">{inviteError}</p>}
+          <div className="space-y-2">
+            {applications.map(app => {
+              const sent = invitesSent.has(app.id)
+              const sending = sendingInviteFor === app.id
+              return (
+                <div key={app.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">{app.jobs?.title ?? 'Role not specified'}</p>
+                    <p className="text-xs text-slate-400">Candidate picks their own slot via email link</p>
+                  </div>
+                  <button
+                    onClick={() => sendScheduleEmail(app.id)}
+                    disabled={sending || sent || !candidate.email}
+                    className={cn(
+                      'btn-primary text-xs',
+                      sent && 'bg-emerald-600 hover:bg-emerald-600'
+                    )}
+                    title={!candidate.email ? 'Candidate has no email on file' : undefined}
+                  >
+                    {sent ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" /> Invite sent
+                      </>
+                    ) : sending ? (
+                      'Sending…'
+                    ) : (
+                      <>
+                        <CalendarClock className="h-3.5 w-3.5" /> Send interview invite
+                      </>
+                    )}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Notes */}
       <div className="card p-5 space-y-4">

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  ChevronLeft, Mail, Phone, MapPin, MessageCircle, Plus, Trash2, Users,
+  ChevronLeft, Mail, Phone, MapPin, MessageCircle, Plus, Trash2, Users, Building2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn, formatDate, formatRelative, initials } from '@/lib/utils'
@@ -32,6 +32,7 @@ export default function RequirementDetail({ requirement: init, notes: initNotes,
   const [noteText, setNoteText] = useState('')
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState<string | null>(null)
+  const [converting, setConverting] = useState(false)
 
   const editable = canWrite(role)
   const isAdmin  = role === 'admin'
@@ -73,6 +74,21 @@ export default function RequirementDetail({ requirement: init, notes: initNotes,
     }
     setNotes(n => [data as ClientRequirementNote, ...n])
     setNoteText('')
+  }
+
+  async function convertToClient() {
+    setConverting(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/client-requirements/${req.id}/convert`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Conversion failed')
+      router.push(`/requisitions?client=${data.client.id}`)
+      router.refresh()
+    } catch (err) {
+      setError((err as Error).message)
+      setConverting(false)
+    }
   }
 
   async function remove() {
@@ -169,11 +185,21 @@ export default function RequirementDetail({ requirement: init, notes: initNotes,
           </div>
           <span className={cn('badge', st.className)}>{st.label}</span>
           {!editable && <span className="text-xs text-slate-400">Read-only access</span>}
-          {isAdmin && (
-            <button onClick={remove} disabled={saving} className="btn-ghost text-red-600 hover:bg-red-50 ml-auto">
-              <Trash2 className="h-4 w-4" /> Delete
-            </button>
-          )}
+          <div className="ml-auto flex items-center gap-2">
+            {editable && !req.converted_client_id && (
+              <button onClick={convertToClient} disabled={converting} className="btn-primary text-xs">
+                <Building2 className="h-3.5 w-3.5" /> {converting ? 'Converting…' : 'Convert to client'}
+              </button>
+            )}
+            {req.converted_client_id && (
+              <span className="text-xs text-emerald-600 font-medium">Converted to client</span>
+            )}
+            {isAdmin && (
+              <button onClick={remove} disabled={saving} className="btn-ghost text-red-600 hover:bg-red-50">
+                <Trash2 className="h-4 w-4" /> Delete
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
