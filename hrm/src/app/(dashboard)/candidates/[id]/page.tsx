@@ -12,6 +12,7 @@ export default async function CandidatePage({ params }: { params: { id: string }
     { data: stages },
     { data: notes },
     { data: interviews },
+    { data: applications },
   ] = await Promise.all([
     supabase
       .from('candidates')
@@ -32,6 +33,12 @@ export default async function CandidatePage({ params }: { params: { id: string }
       .select('*, transcript:interview_transcripts(*)')
       .eq('candidate_id', params.id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('applications')
+      .select('id, status, jobs(title)')
+      .eq('candidate_id', params.id)
+      .eq('status', 'active')
+      .order('applied_at', { ascending: false }),
   ])
 
   if (!candidate) notFound()
@@ -52,6 +59,7 @@ export default async function CandidatePage({ params }: { params: { id: string }
       notes={notes ?? []}
       interviews={interviews ?? []}
       cvUrl={cvUrl}
+      applications={(applications ?? []) as any}
     />
   )
 }
